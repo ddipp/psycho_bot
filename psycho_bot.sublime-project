@@ -1,0 +1,37 @@
+{
+	"build_systems":
+	[
+		{
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"name": "Anaconda Python Builder",
+			"selector": "source.python",
+			"shell_cmd": "\"/home/d/projects/psycho_bot/.venv/bin/python3\" -u \"$file\"",
+		}
+	],
+	"folders":
+	[
+		{
+			"folder_exclude_patterns":
+			[
+				"__*__",
+				".venv",
+				"migrations",
+				"node_modules"
+			],
+			"path": ".",
+		},
+	],
+	"settings":
+	{
+		"python_interpreter": "/home/d/projects/psycho_bot/.venv/bin/python3",
+		"todoreview":
+		{
+			"exclude_folders":
+			[
+				".git/*",
+				".venv/*",
+				"static/*"
+			],
+		},
+	},
+}
