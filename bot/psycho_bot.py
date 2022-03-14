@@ -4,12 +4,12 @@ import sys
 import inspect
 import logging
 
-from pathlib import Path
-
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.utils.markdown import text, bold
 from aiogram.types import ParseMode
+
+from psycho_lib import get_decks_info  # noqa
 
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(current_dir)
@@ -20,7 +20,9 @@ try:
 except ImportError:
     from config import TOKEN, REDISDB, DECK_DIR
 
-print(list(Path(DECK_DIR).glob('*')))
+
+print(get_decks_info(DECK_DIR))
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
