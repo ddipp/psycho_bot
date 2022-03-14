@@ -7,7 +7,15 @@ def get_decks_info(dirname):
     # get all subdirectory
     p = Path(dirname)
     decks = [x for x in p.iterdir() if x.is_dir()]
-    return decks
+    # get info for each subdirectory
+    info = {}
+    for d in decks:
+        f = d / 'INFO'
+        if f.exists():
+            info[f.open().readline().strip()] = d
+        else:
+            info[d.name] = d
+    return info
 
 
 if __name__ == "__main__":
