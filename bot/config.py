@@ -1,2 +1,3 @@
 TOKEN = 'BOT TOKEN'
 REDISDB = 2
+DECK_DIR = 'DecksOfCards'
