@@ -7,7 +7,7 @@ import logging
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.utils.markdown import text, bold
-from aiogram.types import ParseMode
+from aiogram.types import ParseMode, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
 from psycho_lib import get_decks_info  # noqa
 
@@ -20,9 +20,8 @@ try:
 except ImportError:
     from config import TOKEN, REDISDB, DECK_DIR
 
-
-print(get_decks_info(DECK_DIR))
-
+# Get decks directory
+deck_dirs = get_decks_info(DECK_DIR)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -33,11 +32,21 @@ storage = RedisStorage2(host='localhost', port=6379, db=REDISDB)
 dp = Dispatcher(bot, storage=storage)
 
 
+@dp.message_handler(regexp='привет')
+async def vipcount(message: types.Message):
+    keyboard = InlineKeyboardMarkup(row_width=3)
+    for deck_name, deck_folder in deck_dirs.items():
+        print(deck_name, deck_folder)
+        keyboard.add(InlineKeyboardButton(text=deck_name, callback_data="select_folder:{0}".format(deck_name)))
+    await message.reply("Шестое - запрашиваем контакт и геолокацию\nЭти две кнопки не зависят друг от друга", reply_markup=keyboard)
+
+
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
     msg = text(bold('Привет'),
-               'Можно выбрать колоду',
-               'можно не выбирать',
+               'Карта на сегодня',
+               'Выбери колоду',
+               deck_dirs,
                sep='\n')
     await message.answer(msg, parse_mode=ParseMode.MARKDOWN)
 

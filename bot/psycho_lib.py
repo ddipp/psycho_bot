@@ -25,3 +25,7 @@ if __name__ == "__main__":
         from config import DECK_DIR
 
     print(get_decks_info(DECK_DIR))
+# def start(message):
+#   if message.text == 'Фото':
+#       photo = open('test/' + random.choice(os.listdir('test')), 'rb')
+#       bot.send_photo(message.from_user.id, photo)
