@@ -4,9 +4,9 @@ import random
 from pathlib import Path
 
 
-def get_decks_info(dirname):
+def get_decks_info(parent_dir, dirname):
     # get all subdirectory
-    p = Path(dirname)
+    p = Path(parent_dir) / Path(dirname)
     decks = [x for x in p.iterdir() if x.is_dir()]
     # get info for each subdirectory
     info = {}

@@ -22,7 +22,7 @@ except ImportError:
     from config import TOKEN, REDISDB, DECK_DIR
 
 # Get decks directory
-deck_dirs = get_decks_info(DECK_DIR)
+deck_dirs = get_decks_info(parent_dir, DECK_DIR)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
