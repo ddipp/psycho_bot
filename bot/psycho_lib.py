@@ -4,7 +4,7 @@ import random
 import time
 from pathlib import Path
 
-period = 120
+period = 60 * 60 * 24
 
 
 async def how_long_to_wait(state, cards_of_day):
