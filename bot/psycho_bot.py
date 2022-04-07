@@ -9,17 +9,18 @@ from aiogram.contrib.fsm_storage.redis import RedisStorage2
 from aiogram.utils.markdown import text, bold
 from aiogram.types import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.callback_data import CallbackData
+from aiogram.dispatcher import FSMContext
 
-from psycho_lib import get_decks_info, get_random_card  # noqa
+from psycho_lib import get_decks_info, get_random_card, how_much_is_available, add_card_to_day, how_long_to_wait  # noqa
 
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
 try:
-    from productionconfig import TOKEN, REDISDB, DECK_DIR
+    from productionconfig import TOKEN, REDISDB, DECK_DIR, DEFAULT_CARDS_OF_DAY
 except ImportError:
-    from config import TOKEN, REDISDB, DECK_DIR
+    from config import TOKEN, REDISDB, DECK_DIR, DEFAULT_CARDS_OF_DAY
 
 # Get decks directory
 deck_dirs = get_decks_info(parent_dir, DECK_DIR)
@@ -42,15 +43,30 @@ def get_decks_keyboard():
     return keyboard
 
 
+@dp.message_handler(regexp='test', state='*')
+async def test(message: types.Message, state: FSMContext):
+    c = await how_much_is_available(state, DEFAULT_CARDS_OF_DAY)
+    if c > 0:
+        await add_card_to_day(state)
+        await message.answer(c, parse_mode=ParseMode.MARKDOWN)
+    else:
+        await message.answer('Sorry', parse_mode=ParseMode.MARKDOWN)
+
+
 @dp.message_handler(regexp='хочу карту')
-async def vipcount(message: types.Message):
-    keyboard = get_decks_keyboard()
-    await message.answer("Из какой колоды вытягиваем карту?", reply_markup=keyboard)
+async def vipcount(message: types.Message, state: FSMContext):
+    c = await how_much_is_available(state, DEFAULT_CARDS_OF_DAY)
+    if c > 0:
+        keyboard = get_decks_keyboard()
+        await add_card_to_day(state)
+        await message.answer("Из какой колоды вытягиваем карту?", reply_markup=keyboard)
+    else:
+        next_through = await how_long_to_wait(state, DEFAULT_CARDS_OF_DAY)
+        await message.answer('Извините, я могу дать только три карты в 24 часа, следующая через {0}'.format(next_through), parse_mode=ParseMode.MARKDOWN)
 
 
 @dp.callback_query_handler(deck_cb.filter(action='get_card'))
-async def get_card_cb_handler(query: types.CallbackQuery, callback_data: dict):
-    # logging.info(callback_data)
+async def get_card_cb_handler(query: types.CallbackQuery, callback_data: dict, state: FSMContext):
     card = get_random_card(deck_dirs[callback_data['deck']])
     await bot.send_photo(chat_id=query.from_user.id, photo=card)
     await bot.edit_message_text('{0}'.format(callback_data['deck']),
