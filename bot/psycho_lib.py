@@ -41,6 +41,7 @@ async def how_much_is_available(state, cards_of_day):
 
     # проверяем выданные карты
     for key in sorted(cards):
+        # Если время для данной карты прошло, то удаляем
         if current_time - int(key) > period:
             del cards[key]
 

@@ -62,7 +62,10 @@ async def vipcount(message: types.Message, state: FSMContext):
         await message.answer("Из какой колоды вытягиваем карту?", reply_markup=keyboard)
     else:
         next_through = await how_long_to_wait(state, DEFAULT_CARDS_OF_DAY)
-        await message.answer('Извините, я могу дать только три карты в 24 часа, следующая через {0}'.format(next_through), parse_mode=ParseMode.MARKDOWN)
+        await message.answer(
+            'Извините, я могу дать только три карты в 24 часа, следующая через {0}'.format(next_through),
+            parse_mode=ParseMode.MARKDOWN
+        )
 
 
 @dp.callback_query_handler(deck_cb.filter(action='get_card'))
