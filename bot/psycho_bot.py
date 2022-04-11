@@ -12,7 +12,7 @@ from aiogram.utils.callback_data import CallbackData
 from aiogram.dispatcher import FSMContext
 
 from psycho_lib import get_decks_info, get_random_card, how_much_is_available, add_card_to_day, how_long_to_wait  # noqa
-from stats import PsychoStats  # noqa
+from stats import PsychoStats, ActionStatus  # noqa
 
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parent_dir = os.path.dirname(current_dir)
@@ -47,28 +47,20 @@ def get_decks_keyboard():
     return keyboard
 
 
-# @dp.message_handler(regexp='test', state='*')
-# async def test(message: types.Message, state: FSMContext):
-#     c = await how_much_is_available(state, DEFAULT_CARDS_OF_DAY)
-#     if c > 0:
-#         await add_card_to_day(state)
-#         await message.answer(c, parse_mode=ParseMode.MARKDOWN)
-#     else:
-#         await message.answer('Sorry', parse_mode=ParseMode.MARKDOWN)
-
-
 @dp.message_handler(regexp='хочу карту')
 async def vipcount(message: types.Message, state: FSMContext):
     c = await how_much_is_available(state, DEFAULT_CARDS_OF_DAY)
     if c > 0:
         keyboard = get_decks_keyboard()
         await message.answer("Из какой колоды вытягиваем карту?", reply_markup=keyboard)
+        await stat.add_action(message.from_user.id, ActionStatus.request_card, 1)
     else:
         next_through = await how_long_to_wait(state, DEFAULT_CARDS_OF_DAY)
         await message.answer(
             'Извините, я могу дать только три карты в 24 часа, следующая через {0}'.format(next_through),
             parse_mode=ParseMode.MARKDOWN
         )
+        await stat.add_action(message.from_user.id, ActionStatus.request_card, 0)
 
 
 @dp.callback_query_handler(deck_cb.filter(action='get_card'))
@@ -81,11 +73,13 @@ async def get_card_cb_handler(query: types.CallbackQuery, callback_data: dict, s
         await bot.edit_message_text('{0}'.format(callback_data['deck']),
                                     query.from_user.id,
                                     query.message.message_id)
+        await stat.add_action(query.from_user.id, ActionStatus.send_card, 1)
     else:
         next_through = await how_long_to_wait(state, DEFAULT_CARDS_OF_DAY)
         await bot.edit_message_text('Извините, я могу дать только три карты в 24 часа, следующая через {0}'.format(next_through),
                                     query.from_user.id,
                                     query.message.message_id)
+        await stat.add_action(query.from_user.id, ActionStatus.send_card, 0)
 
 
 @dp.message_handler(commands=['rules'])
@@ -93,6 +87,7 @@ async def rules(message: types.Message):
     msg = text(bold('Правила\n'),
                'Вы можете получить не более трех карт в день\n',
                sep='')
+    await stat.add_action(message.from_user.id, ActionStatus.rules, 1)
     await message.answer(msg, parse_mode=ParseMode.MARKDOWN)
 
 
@@ -112,6 +107,7 @@ async def help(message: types.Message):
                '3. Смотрите на рисунок как на иллюстрацию в книге и пофантазируйте к какой истории эта иллюстрация\n',
                '4. Именно в этой истории будет подсказка на Ваш запрос или напутствие на день\n',
                sep='')
+    await stat.add_action(message.from_user.id, ActionStatus.help, 1)
     await message.answer(msg, parse_mode=ParseMode.MARKDOWN)
 
 
@@ -122,6 +118,7 @@ async def start(message: types.Message):
                'Если ты еще не знаешь как им пользоваться, посмотри инструкцию в меню (или нажмите /help).\n',
                'Формулируй запрос, пиши - ', bold('"хочу карту",'), '  и выбирай колоду.',
                sep='')
+    await stat.add_action(message.from_user.id, ActionStatus.start, 1)
     await message.answer(msg, parse_mode=ParseMode.MARKDOWN)
 
 
