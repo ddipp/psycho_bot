@@ -45,10 +45,6 @@ async def how_much_is_available(state, cards_of_day):
         if current_time - int(key) > period:
             del cards[key]
 
-    # Снова проверяем сколько осталось
-    if len(cards) < cards_of_day:
-        print('Можно выдать')
-    print(cards)
     await state.update_data(cards=cards)
     return cards_of_day - len(cards)
 
@@ -73,12 +69,3 @@ def get_random_card(deckdir):
     files = [x for x in p if x.is_file()]
     card = open(random.choice(files), 'rb')
     return card
-
-
-if __name__ == "__main__":
-    try:
-        from productionconfig import DECK_DIR
-    except ImportError:
-        from config import DECK_DIR
-
-    print(get_decks_info(DECK_DIR))
