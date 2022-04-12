@@ -34,7 +34,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Initialize bot and dispatcher
 bot = Bot(token=TOKEN)
-storage = RedisStorage2(host='localhost', port=6379, db=REDISDB)
+storage = RedisStorage2(host='localhost', port=6379, db=REDISDB, pool_size=1000)
 dp = Dispatcher(bot, storage=storage)
 
 deck_cb = CallbackData('deck_cb', 'action', 'deck')
