@@ -6,5 +6,6 @@ __pycache__
 *.db
 productionconfig.py
 init_db.sh
+tmp
 # dist/
 # pop.py

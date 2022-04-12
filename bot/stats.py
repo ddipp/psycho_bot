@@ -14,7 +14,7 @@ class ActionStatus(enum.Enum):
 
 class PsychoStats():
     def __init__(self, db):
-        self.r = aioredis.from_url("redis://localhost", db=db, decode_responses=True)
+        self.r = aioredis.from_url("redis://localhost", db=db, decode_responses=True, max_connections=1000)
 
     async def add_action(self, id, action, result):
         await self.r.xadd("stats:{0}".format(id), {'a': action.value, 'r': result})
