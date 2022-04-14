@@ -19,6 +19,9 @@ class PsychoStats():
     async def add_action(self, id, action, result):
         await self.r.xadd("stats:{0}".format(id), {'a': action.value, 'r': result})
 
+    async def test(self):
+        pass
+
     # cur = "0"  # set initial cursor to 0
     # while cur:
     #     cur, keys = await redis.scan(cur)
