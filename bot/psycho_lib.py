@@ -44,8 +44,8 @@ async def how_much_is_available(state, cards_of_day):
         # Если время для данной карты прошло, то удаляем
         if current_time - int(key) > period:
             del cards[key]
+            await state.update_data(cards=cards)
 
-    await state.update_data(cards=cards)
     return cards_of_day - len(cards)
 
 
