@@ -23,8 +23,6 @@ try:
 except ImportError:
     from config import TOKEN, REDISDB, DECK_DIR, DEFAULT_CARDS_OF_DAY
 
-# Get decks directory
-deck_dirs = get_decks_info(parent_dir, DECK_DIR)
 
 # Stats component
 stat = PsychoStats(REDISDB)
@@ -41,13 +39,28 @@ deck_cb = CallbackData('deck_cb', 'action', 'deck')
 
 
 def get_decks_keyboard():
-    keyboard = InlineKeyboardMarkup(row_width=3)
-    for deck_name, deck_folder in deck_dirs.items():
-        keyboard.add(InlineKeyboardButton(text=deck_name, callback_data=deck_cb.new(action='get_card', deck=deck_name)))
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    deck_dirs = list(get_decks_info(parent_dir, DECK_DIR).keys())
+    deck_dirs = sorted(deck_dirs, key=len, reverse=True)
+
+    print(deck_dirs)
+
+    while len(deck_dirs) > 0:
+        this_btn = deck_dirs.pop()
+
+        if len(this_btn) < 15 and len(deck_dirs) > 0 and len(deck_dirs[-1]) < 15:
+            btn1 = InlineKeyboardButton(text=this_btn, callback_data=deck_cb.new(action='get_card', deck=this_btn))
+            next_btn = deck_dirs.pop()
+            btn2 = InlineKeyboardButton(text=next_btn, callback_data=deck_cb.new(action='get_card', deck=next_btn))
+            keyboard.row(btn1, btn2)
+        else:
+            btn1 = InlineKeyboardButton(text=this_btn, callback_data=deck_cb.new(action='get_card', deck=this_btn))
+            keyboard.row(btn1)
     return keyboard
 
 
 @dp.message_handler(regexp='хочу карту')
+@dp.message_handler(commands=['card'])
 async def vipcount(message: types.Message, state: FSMContext):
     c = await how_much_is_available(state, DEFAULT_CARDS_OF_DAY)
     if c > 0:
@@ -67,6 +80,7 @@ async def vipcount(message: types.Message, state: FSMContext):
 async def get_card_cb_handler(query: types.CallbackQuery, callback_data: dict, state: FSMContext):
     c = await how_much_is_available(state, DEFAULT_CARDS_OF_DAY)
     if c > 0:
+        deck_dirs = get_decks_info(parent_dir, DECK_DIR)
         card = get_random_card(deck_dirs[callback_data['deck']])
         await add_card_to_day(state)
         await bot.send_photo(chat_id=query.from_user.id, photo=card)
@@ -76,9 +90,10 @@ async def get_card_cb_handler(query: types.CallbackQuery, callback_data: dict, s
         await stat.add_action(query.from_user.id, ActionStatus.send_card, 1)
     else:
         next_through = await how_long_to_wait(state, DEFAULT_CARDS_OF_DAY)
-        await bot.edit_message_text('Извините, я могу дать только три карты в 24 часа, следующая через {0}'.format(next_through),
-                                    query.from_user.id,
-                                    query.message.message_id)
+        await bot.edit_message_text(
+            'Извините, я могу дать только {1} карты в 24 часа, следующая через {0}'.format(next_through, DEFAULT_CARDS_OF_DAY),
+            query.from_user.id,
+            query.message.message_id)
         await stat.add_action(query.from_user.id, ActionStatus.send_card, 0)
 
 
@@ -116,11 +131,21 @@ async def start(message: types.Message):
     msg = text(bold('Привет\n'),
                'Метафорические карты - это психологический инструмент.\n',
                'Если ты еще не знаешь как им пользоваться, посмотри инструкцию в меню (или нажмите /help).\n',
-               'Формулируй запрос, пиши - ', bold('"хочу карту",'), '  и выбирай колоду.',
+               'Формулируй запрос, пиши - ', bold('"хочу карту",'), '(или нажмите в меню /card)  и выбирай колоду.',
                sep='')
     await stat.add_action(message.from_user.id, ActionStatus.start, 1)
     await message.answer(msg, parse_mode=ParseMode.MARKDOWN)
 
 
+async def setup_bot_commands(dp):
+    bot_commands = [
+        types.BotCommand(command="/start", description="Начало"),
+        types.BotCommand(command="/help", description="Инструкция"),
+        types.BotCommand(command="/rules", description="Правила"),
+        types.BotCommand(command="/card", description="Хочу карту")
+    ]
+    await dp.bot.set_my_commands(bot_commands)
+
+
 if __name__ == '__main__':
-    executor.start_polling(dp)  # , skip_updates=True)
+    executor.start_polling(dp, skip_updates=False, on_startup=setup_bot_commands)
