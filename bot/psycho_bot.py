@@ -19,9 +19,9 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
 try:
-    from productionconfig import TOKEN, REDISDB, DECK_DIR, DEFAULT_CARDS_OF_DAY
+    from productionconfig import TOKEN, REDISDB, DECK_DIR, DEFAULT_CARDS_OF_DAY, OLYA_ID
 except ImportError:
-    from config import TOKEN, REDISDB, DECK_DIR, DEFAULT_CARDS_OF_DAY
+    from config import TOKEN, REDISDB, DECK_DIR, DEFAULT_CARDS_OF_DAY, OLYA_ID
 
 
 # Stats component
@@ -43,8 +43,6 @@ def get_decks_keyboard():
     deck_dirs = list(get_decks_info(parent_dir, DECK_DIR).keys())
     deck_dirs = sorted(deck_dirs, key=len, reverse=True)
 
-    print(deck_dirs)
-
     while len(deck_dirs) > 0:
         this_btn = deck_dirs.pop()
 
@@ -63,7 +61,7 @@ def get_decks_keyboard():
 @dp.message_handler(commands=['card'])
 async def vipcount(message: types.Message, state: FSMContext):
     c = await how_much_is_available(state, DEFAULT_CARDS_OF_DAY)
-    if c > 0:
+    if c > 0 or message.from_user.id == OLYA_ID:
         keyboard = get_decks_keyboard()
         await message.answer("Из какой колоды вытягиваем карту?", reply_markup=keyboard)
         await stat.add_action(message.from_user.id, ActionStatus.request_card, 1)
@@ -79,7 +77,7 @@ async def vipcount(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(deck_cb.filter(action='get_card'))
 async def get_card_cb_handler(query: types.CallbackQuery, callback_data: dict, state: FSMContext):
     c = await how_much_is_available(state, DEFAULT_CARDS_OF_DAY)
-    if c > 0:
+    if c > 0 or query.from_user.id == OLYA_ID:
         deck_dirs = get_decks_info(parent_dir, DECK_DIR)
         card = get_random_card(deck_dirs[callback_data['deck']])
         await add_card_to_day(state)
