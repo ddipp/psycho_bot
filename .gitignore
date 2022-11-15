@@ -4,7 +4,8 @@ DecksOfCards
 # *.sublime-project
 __pycache__
 *.db
-productionconfig.py
+bot/productionconfig.py
+bot/config.py
 init_db.sh
 tmp
 # dist/
